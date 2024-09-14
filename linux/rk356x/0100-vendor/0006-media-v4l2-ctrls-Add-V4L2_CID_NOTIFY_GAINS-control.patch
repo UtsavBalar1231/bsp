@@ -1,0 +1,128 @@
+From 6b766727affcee657e6ceb932fb67d47c3e1e275 Mon Sep 17 00:00:00 2001
+From: David Plowman <david.plowman@raspberrypi.com>
+Date: Mon, 16 Aug 2021 13:39:08 +0200
+Subject: [PATCH 6/8] media: v4l2-ctrls: Add V4L2_CID_NOTIFY_GAINS control
+
+We add a new control V4L2_CID_NOTIFY_GAINS which allows the sensor to
+be notified what gains will be applied to the different colour
+channels by subsequent processing (such as by an ISP), even though the
+sensor will not apply any of these gains itself.
+
+For Bayer sensors this will be an array control taking 4 values which
+are the 4 gains arranged in the fixed order B, Gb, Gr and R,
+irrespective of the exact Bayer order of the sensor itself. The use of
+an array makes it straightforward to extend this control to non-Bayer
+sensors (for example, sensors with an RGBW pattern) in future.
+
+The units are in all cases linear with the default value indicating a
+gain of exactly 1.0. For example, if the default value were reported as
+128 then the value 192 would represent a gain of exactly 1.5.
+
+Signed-off-by: David Plowman <david.plowman@raspberrypi.com>
+Reviewed-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+huawei@kernel.org>
+Change-Id: Ibb06bcedb38b01154735d957d27abefd282471f9
+Signed-off-by: UtsavBalar1231 <utsavbalar1231@gmail.com>
+---
+ drivers/media/i2c/imx708.c           | 28 ++++++++++++++--------------
+ drivers/media/v4l2-core/v4l2-ctrls.c |  1 +
+ include/uapi/linux/v4l2-controls.h   |  1 +
+ 3 files changed, 16 insertions(+), 14 deletions(-)
+
+diff --git a/drivers/media/i2c/imx708.c b/drivers/media/i2c/imx708.c
+index ae374fe54738..713ab6fa2758 100644
+--- a/drivers/media/i2c/imx708.c
++++ b/drivers/media/i2c/imx708.c
+@@ -59,7 +59,7 @@ MODULE_PARM_DESC(qbc_adjust, "Quad Bayer broken line correction strength [0,2-5]
+ 
+ #define IMX708_REG_ORIENTATION		0x101
+ 
+-#define IMX708_INCLK_FREQ		24000000
++#define IMX708_XCLK_FREQ		24000000
+ 
+ /* Default initial pixel rate, will get updated for each mode. */
+ #define IMX708_INITIAL_PIXEL_RATE	590000000
+@@ -906,8 +906,8 @@ struct imx708 {
+ 
+ 	struct v4l2_mbus_framefmt fmt;
+ 
+-	struct clk *inclk;
+-	u32 inclk_freq;
++	struct clk *xclk;
++	u32 xclk_freq;
+ 
+ 	struct gpio_desc *reset_gpio;
+ 	struct regulator_bulk_data supplies[ARRAY_SIZE(imx708_supply_name)];
+@@ -1672,7 +1672,7 @@ static int imx708_power_on(struct device *dev)
+ 		return ret;
+ 	}
+ 
+-	ret = clk_prepare_enable(imx708->inclk);
++	ret = clk_prepare_enable(imx708->xclk);
+ 	if (ret) {
+ 		dev_err(&client->dev, "%s: failed to enable clock\n",
+ 			__func__);
+@@ -1702,7 +1702,7 @@ static int imx708_power_off(struct device *dev)
+ 		gpiod_set_value_cansleep(imx708->reset_gpio, 0);
+ 	regulator_bulk_disable(ARRAY_SIZE(imx708_supply_name),
+ 			       imx708->supplies);
+-	clk_disable_unprepare(imx708->inclk);
++	clk_disable_unprepare(imx708->xclk);
+ 
+ 	/* Force reprogramming of the common registers when powered up again. */
+ 	imx708->common_regs_written = false;
+@@ -2371,17 +2371,17 @@ static int imx708_probe(struct i2c_client *client,
+ 	if (imx708_check_hwcfg(dev, imx708))
+ 		return -EINVAL;
+ 
+-	/* Get system clock (inclk) */
+-	imx708->inclk = devm_clk_get(dev, "inclk");
+-	if (IS_ERR(imx708->inclk))
+-		return dev_err_probe(dev, PTR_ERR(imx708->inclk),
+-				     "failed to get inclk\n");
++	/* Get system clock (xclk) */
++	imx708->xclk = devm_clk_get(dev, "xclk");
++	if (IS_ERR(imx708->xclk))
++		return dev_err_probe(dev, PTR_ERR(imx708->xclk),
++				     "failed to get xclk\n");
+ 
+-	imx708->inclk_freq = clk_get_rate(imx708->inclk);
+-	if (imx708->inclk_freq != IMX708_INCLK_FREQ)
++	imx708->xclk_freq = clk_get_rate(imx708->xclk);
++	if (imx708->xclk_freq != IMX708_XCLK_FREQ)
+ 		return dev_err_probe(dev, -EINVAL,
+-				     "inclk frequency not supported: %d Hz\n",
+-				     imx708->inclk_freq);
++				     "xclk frequency not supported: %d Hz\n",
++				     imx708->xclk_freq);
+ 
+ 	ret = imx708_get_regulators(imx708);
+ 	if (ret)
+diff --git a/drivers/media/v4l2-core/v4l2-ctrls.c b/drivers/media/v4l2-core/v4l2-ctrls.c
+index e46515fcec5b..81a098df85e8 100644
+--- a/drivers/media/v4l2-core/v4l2-ctrls.c
++++ b/drivers/media/v4l2-core/v4l2-ctrls.c
+@@ -1160,6 +1160,7 @@ const char *v4l2_ctrl_get_name(u32 id)
+ 	case V4L2_CID_TEST_PATTERN_GREENR:	return "Green (Red) Pixel Value";
+ 	case V4L2_CID_TEST_PATTERN_BLUE:	return "Blue Pixel Value";
+ 	case V4L2_CID_TEST_PATTERN_GREENB:	return "Green (Blue) Pixel Value";
++	case V4L2_CID_NOTIFY_GAINS:		return "Notify Gains";
+ 
+ 	/* Image processing controls */
+ 	/* Keep the order of the 'case's the same as in v4l2-controls.h! */
+diff --git a/include/uapi/linux/v4l2-controls.h b/include/uapi/linux/v4l2-controls.h
+index b80ac775366a..6065eccb4211 100644
+--- a/include/uapi/linux/v4l2-controls.h
++++ b/include/uapi/linux/v4l2-controls.h
+@@ -1109,6 +1109,7 @@ enum v4l2_jpeg_chroma_subsampling {
+ #define V4L2_CID_TEST_PATTERN_BLUE		(V4L2_CID_IMAGE_SOURCE_CLASS_BASE + 6)
+ #define V4L2_CID_TEST_PATTERN_GREENB		(V4L2_CID_IMAGE_SOURCE_CLASS_BASE + 7)
+ #define V4L2_CID_UNIT_CELL_SIZE			(V4L2_CID_IMAGE_SOURCE_CLASS_BASE + 8)
++#define V4L2_CID_NOTIFY_GAINS			(V4L2_CID_IMAGE_SOURCE_CLASS_BASE + 9)
+ 
+ 
+ /* Image processing controls */
+-- 
+2.45.2
+

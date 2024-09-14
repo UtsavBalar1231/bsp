@@ -1,0 +1,52 @@
+From 05564ea85591ab5e65550e2d9d26e7a7f6193ba3 Mon Sep 17 00:00:00 2001
+From: UtsavBalar1231 <utsavbalar1231@gmail.com>
+Date: Tue, 16 Jul 2024 22:57:52 +0530
+Subject: [PATCH 8/8] change-defaults
+
+Change-Id: Id36a948634868376528f0f38ab3f7164786a47e8
+Signed-off-by: UtsavBalar1231 <utsavbalar1231@gmail.com>
+---
+ drivers/media/i2c/imx708.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/media/i2c/imx708.c b/drivers/media/i2c/imx708.c
+index 951145386327..2f52107a49b6 100644
+--- a/drivers/media/i2c/imx708.c
++++ b/drivers/media/i2c/imx708.c
+@@ -75,7 +75,7 @@ MODULE_PARM_DESC(qbc_adjust, "Quad Bayer broken line correction strength [0,2-5]
+ /* Exposure control */
+ #define IMX708_REG_EXPOSURE		0x0202
+ #define IMX708_EXPOSURE_OFFSET		48
+-#define IMX708_EXPOSURE_DEFAULT		0x640
++#define IMX708_EXPOSURE_DEFAULT		(0x640 * 2)
+ #define IMX708_EXPOSURE_STEP		1
+ #define IMX708_EXPOSURE_MIN		1
+ #define IMX708_EXPOSURE_MAX		(IMX708_FRAME_LENGTH_MAX - \
+@@ -86,13 +86,13 @@ MODULE_PARM_DESC(qbc_adjust, "Quad Bayer broken line correction strength [0,2-5]
+ #define IMX708_ANA_GAIN_MIN		112
+ #define IMX708_ANA_GAIN_MAX		960
+ #define IMX708_ANA_GAIN_STEP		1
+-#define IMX708_ANA_GAIN_DEFAULT	   IMX708_ANA_GAIN_MIN
++#define IMX708_ANA_GAIN_DEFAULT	   (IMX708_ANA_GAIN_MIN * 3)
+ 
+ /* Digital gain control */
+ #define IMX708_REG_DIGITAL_GAIN		0x020e
+ #define IMX708_DGTL_GAIN_MIN		0x0100
+ #define IMX708_DGTL_GAIN_MAX		0xffff
+-#define IMX708_DGTL_GAIN_DEFAULT	0x0100
++#define IMX708_DGTL_GAIN_DEFAULT	0x4fff
+ #define IMX708_DGTL_GAIN_STEP		1
+ 
+ /* Colour balance controls */
+@@ -101,7 +101,7 @@ MODULE_PARM_DESC(qbc_adjust, "Quad Bayer broken line correction strength [0,2-5]
+ #define IMX708_COLOUR_BALANCE_MIN	0x01
+ #define IMX708_COLOUR_BALANCE_MAX	0xffff
+ #define IMX708_COLOUR_BALANCE_STEP	0x01
+-#define IMX708_COLOUR_BALANCE_DEFAULT	0x100
++#define IMX708_COLOUR_BALANCE_DEFAULT	0x1fff
+ 
+ /* Test Pattern Control */
+ #define IMX708_REG_TEST_PATTERN		0x0600
+-- 
+2.45.2
+

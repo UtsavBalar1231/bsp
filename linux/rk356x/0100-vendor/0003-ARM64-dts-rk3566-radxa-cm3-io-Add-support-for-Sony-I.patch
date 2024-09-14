@@ -1,0 +1,162 @@
+From 08f900a459dbfd842bd04246c4eb6df5df3f3a2a Mon Sep 17 00:00:00 2001
+From: UtsavBalar1231 <utsavbalar1231@gmail.com>
+Date: Wed, 3 Jul 2024 21:42:19 +0530
+Subject: [PATCH 3/8] ARM64: dts: rk3566-radxa-cm3-io: Add support for Sony
+ IMX708 sensor
+
+Change-Id: I65f9e265ebf510fabd29f85610fac6910970ad5b
+Signed-off-by: UtsavBalar1231 <utsavbalar1231@gmail.com>
+---
+ .../boot/dts/rockchip/rk3566-radxa-cm3-io.dts | 122 ++++++++++++++++++
+ 1 file changed, 122 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3566-radxa-cm3-io.dts b/arch/arm64/boot/dts/rockchip/rk3566-radxa-cm3-io.dts
+index fb73884b401e..f0209ee168c4 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3566-radxa-cm3-io.dts
++++ b/arch/arm64/boot/dts/rockchip/rk3566-radxa-cm3-io.dts
+@@ -112,6 +112,25 @@ vcc_ch482d2: vcc-ch482d2 {
+ 		status = "okay";
+ 	};
+ 
++	ext_cam_clk_imx708_0: ext-cam-clk-imx708-0 {
++		status = "okay";
++		compatible = "fixed-clock";
++		clock-frequency = <24000000>;
++		clock-output-names = "ext_cam_clk_imx708_0";
++		#clock-cells = <0>;
++	};
++
++	camera_pwdn_gpio: camera-pwdn-gpio {
++		status = "okay";
++		compatible = "regulator-fixed";
++		regulator-name = "camera_pwdn_gpio";
++		regulator-always-on;
++		regulator-boot-on;
++		enable-active-high;
++		pwdn-gpios = <&gpio4 RK_PC1 GPIO_ACTIVE_HIGH>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&cam_pwdn_gpio>;
++	};
+ };
+ 
+ &gpio_leds {
+@@ -219,6 +238,103 @@ &pwm0 {
+ 	status = "okay";
+ };
+ 
++&i2c0 {
++	status = "okay";
++	pinctrl-names = "default";
++	pinctrl-0 = <&i2c0_xfer>;
++
++	#address-cells = <1>;
++	#size-cells = <0>;
++
++	imx708: imx708@1a {
++		status = "okay";
++		compatible = "sony,imx708";
++		reg = <0x1a>;
++
++		clocks = <&ext_cam_clk_imx708_0>;
++		clock-names = "xclk";
++		//reset-gpios = <&gpio3 RK_PC6 GPIO_ACTIVE_HIGH>;
++		rockchip,camera-module-index = <1>;
++		rockchip,camera-module-facing = "front";
++		rockchip,camera-module-name = "arducam-imx708";
++		rockchip,camera-module-lens-name = "default";
++
++		port {
++			imx708_0_out: endpoint {
++				remote-endpoint = <&csi2dphy1_uCAM0>;
++				data-lanes = <1 2>;
++				link-frequencies = /bits/ 64 <450000000>;
++			};
++		};
++	};
++};
++
++&csi2_dphy_hw {
++	status = "okay";
++};
++
++&csi2_dphy1 {
++	status = "okay";
++
++	ports {
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		port@0 {
++			reg = <0>;
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			csi2dphy1_uCAM0: endpoint@1 {
++				reg = <1>;
++				remote-endpoint = <&imx708_0_out>;
++				data-lanes = <1 2>;
++			};
++		};
++
++		port@1 {
++			reg = <1>;
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			csi2dphy1_out: endpoint@1 {
++				reg = <1>;
++				remote-endpoint = <&isp0_in>;
++			};
++		};
++	};
++};
++
++&rkisp_vir0 {
++	status = "okay";
++
++	port {
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		isp0_in: endpoint@0 {
++			reg = <0>;
++			remote-endpoint = <&csi2dphy1_out>;
++		};
++	};
++};
++
++&rkisp {
++	status = "okay";
++};
++
++&rkisp_mmu {
++	status = "okay";
++};
++
++&rkcif {
++	status = "okay";
++};
++
++&rkcif_mmu {
++	status = "okay";
++};
++
+ &i2c2 {
+ 	status = "okay";
+ 	hym8563: hym8563@51 {
+@@ -260,6 +376,12 @@ &threshold {
+ };
+ 
+ &pinctrl {
++	camera {
++		cam_pwdn_gpio: cam-pwdn-gpio {
++			rockchip,pins = <4 RK_PC1 RK_FUNC_GPIO &pcfg_pull_up>;
++		};
++	};
++
+ 	headphone {
+ 		hp_det: hp-det {
+ 			rockchip,pins = <4 RK_PC4 RK_FUNC_GPIO &pcfg_pull_up>;
+-- 
+2.45.2
+

@@ -1,0 +1,370 @@
+From 0a20e77510754da129edb37fb100438014ec8e45 Mon Sep 17 00:00:00 2001
+From: UtsavBalar1231 <utsavbalar1231@gmail.com>
+Date: Thu, 11 Jul 2024 20:16:08 +0530
+Subject: [PATCH 7/8] remove hdr
+
+Change-Id: I093499fb1f0eb6a1fb817819c898f8b1f312ee0d
+Signed-off-by: UtsavBalar1231 <utsavbalar1231@gmail.com>
+---
+ drivers/media/i2c/imx708.c | 210 ++++++++++++++++++-------------------
+ 1 file changed, 105 insertions(+), 105 deletions(-)
+
+diff --git a/drivers/media/i2c/imx708.c b/drivers/media/i2c/imx708.c
+index 713ab6fa2758..951145386327 100644
+--- a/drivers/media/i2c/imx708.c
++++ b/drivers/media/i2c/imx708.c
+@@ -34,7 +34,7 @@
+ #endif
+ 
+ #define IMX708_NAME "imx708"
+-#define OF_CAMERA_HDR_MODE "rockchip,camera-hdr-mode"
++//#define OF_CAMERA_HDR_MODE "rockchip,camera-hdr-mode"
+ 
+ #define IMX708_LANES 2
+ 
+@@ -587,7 +587,7 @@ static const struct imx708_reg mode_2x2binned_720p_regs[] = {
+ 	{0x3369, 0x00},
+ };
+ 
+-static const struct imx708_reg mode_hdr_regs[] = {
++static __maybe_unused const struct imx708_reg mode_hdr_regs[] = {
+ 	{0x0342, 0x14},
+ 	{0x0343, 0x60},
+ 	{0x0340, 0x0A},
+@@ -684,7 +684,7 @@ static const struct imx708_reg mode_hdr_regs[] = {
+ };
+ 
+ /* Mode configs. Keep separate lists for when HDR is enabled or not. */
+-static const struct imx708_mode supported_modes_10bit_no_hdr[] = {
++static __maybe_unused const struct imx708_mode supported_modes_10bit_no_hdr[] = {
+ 	{
+ 		.bus_fmt = MEDIA_BUS_FMT_SRGGB10_1X10,
+ 		/* Full resolution. */
+@@ -777,7 +777,7 @@ static const struct imx708_mode supported_modes_10bit_no_hdr[] = {
+ 	},
+ };
+ 
+-static const struct imx708_mode supported_modes_10bit_hdr[] = {
++static __maybe_unused const struct imx708_mode supported_modes_10bit_hdr[] = {
+ 	{
+ 		.bus_fmt = MEDIA_BUS_FMT_SRGGB10_1X10,
+ 		/* There's only one HDR mode, which is 2x2 downscaled */
+@@ -1099,13 +1099,13 @@ static int imx708_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+ 	mutex_lock(&imx708->mutex);
+ 
+ 	/* Initialize try_fmt for the image pad */
+-	if (imx708->hdr_mode->val) {
+-		try_fmt_img->width = supported_modes_10bit_hdr[0].width;
+-		try_fmt_img->height = supported_modes_10bit_hdr[0].height;
+-	} else {
++	/* if (imx708->hdr_mode->val) { */
++	/* 	try_fmt_img->width = supported_modes_10bit_hdr[0].width; */
++	/* 	try_fmt_img->height = supported_modes_10bit_hdr[0].height; */
++	/* } else { */
+ 		try_fmt_img->width = supported_modes_10bit_no_hdr[0].width;
+ 		try_fmt_img->height = supported_modes_10bit_no_hdr[0].height;
+-	}
++	/* } */
+ 	try_fmt_img->code = imx708_get_format_code(imx708);
+ 	try_fmt_img->field = V4L2_FIELD_NONE;
+ 
+@@ -1215,7 +1215,7 @@ static int imx708_set_ctrl(struct v4l2_ctrl *ctrl)
+ 	const struct imx708_mode *mode_list;
+ 	unsigned int code, num_modes;
+ 	int ret = 0;
+-	bool hdr;
++	/* bool hdr; */
+ 
+ 	switch (ctrl->id) {
+ 	case V4L2_CID_VBLANK:
+@@ -1232,8 +1232,8 @@ static int imx708_set_ctrl(struct v4l2_ctrl *ctrl)
+ 		 * as it doesn't set any registers. Don't do anything if the mode
+ 		 * already matches.
+ 		 */
+-		hdr = imx708->mode->rk_hdr_mode != NO_HDR;
+-		if (imx708->mode && hdr != ctrl->val) {
++		/* hdr = imx708->mode->rk_hdr_mode != NO_HDR; */
++		/* if (imx708->mode && hdr != ctrl->val) { */
+ 			code = imx708_get_format_code(imx708);
+ 			get_mode_table(code, &mode_list, &num_modes, ctrl->val);
+ 			imx708->mode = v4l2_find_nearest_size(mode_list,
+@@ -1242,7 +1242,7 @@ static int imx708_set_ctrl(struct v4l2_ctrl *ctrl)
+ 							      imx708->mode->width,
+ 							      imx708->mode->height);
+ 			imx708_set_framing_limits(imx708);
+-		}
++		/* } */
+ 		break;
+ 	}
+ 
+@@ -1642,7 +1642,7 @@ static int imx708_set_stream(struct v4l2_subdev *sd, int enable)
+ 	/* vflip/hflip and hdr mode cannot change during streaming */
+ 	__v4l2_ctrl_grab(imx708->vflip, enable);
+ 	__v4l2_ctrl_grab(imx708->hflip, enable);
+-	__v4l2_ctrl_grab(imx708->hdr_mode, enable);
++	/* __v4l2_ctrl_grab(imx708->hdr_mode, enable); */
+ 
+ 	mutex_unlock(&imx708->mutex);
+ 
+@@ -1819,17 +1819,17 @@ static int imx708_s_power(struct v4l2_subdev *sd, int on)
+ static int imx708_g_mbus_config(struct v4l2_subdev *sd, unsigned int pad_id,
+ 				struct v4l2_mbus_config *config)
+ {
+-	struct imx708 *imx708 = to_imx708(sd);
+-	const struct imx708_mode *mode = imx708->mode;
++	/* struct imx708 *imx708 = to_imx708(sd); */
++	/* const struct imx708_mode *mode = imx708->mode; */
+ 	u32 val = 0;
+ 
+ 	val = 1 << (IMX708_LANES - 1) |
+ 	      V4L2_MBUS_CSI2_CHANNEL_0 |
+ 	      V4L2_MBUS_CSI2_CONTINUOUS_CLOCK;
+-	if (mode->rk_hdr_mode != NO_HDR)
+-		val |= V4L2_MBUS_CSI2_CHANNEL_1;
+-	if (mode->rk_hdr_mode == HDR_X3)
+-		val |= V4L2_MBUS_CSI2_CHANNEL_2;
++	/* if (mode->rk_hdr_mode != NO_HDR) */
++	/* 	val |= V4L2_MBUS_CSI2_CHANNEL_1; */
++	/* if (mode->rk_hdr_mode == HDR_X3) */
++	/* 	val |= V4L2_MBUS_CSI2_CHANNEL_2; */
+ 
+ 	config->type = V4L2_MBUS_CSI2_DPHY;
+ 	config->flags = val;
+@@ -1864,10 +1864,10 @@ static int imx708_get_channel_info(struct imx708 *imx708,
+ static long imx708_ioctl(struct v4l2_subdev *sd, unsigned int cmd, void *arg)
+ {
+ 	struct imx708 *imx708 = to_imx708(sd);
+-	struct rkmodule_hdr_cfg *hdr;
++	/* struct rkmodule_hdr_cfg *hdr; */
+ 	struct rkmodule_channel_info *ch_info;
+ 	//struct rkmodule_csi_dphy_param *dphy_param;
+-	u32 i, h, w;
++	/* u32 i, h, w; */
+ 	long ret = 0;
+ 	u32 stream = 0;
+ 
+@@ -1875,35 +1875,35 @@ static long imx708_ioctl(struct v4l2_subdev *sd, unsigned int cmd, void *arg)
+ 	case RKMODULE_GET_MODULE_INFO:
+ 		imx708_get_module_inf(imx708, (struct rkmodule_inf *)arg);
+ 		break;
+-	case RKMODULE_GET_HDR_CFG:
+-		hdr = (struct rkmodule_hdr_cfg *)arg;
+-		if (imx708->mode->rk_hdr_mode == NO_HDR)
+-			hdr->esp.mode = HDR_NORMAL_VC;
+-		else
+-			hdr->esp.mode = HDR_ID_CODE;
+-		hdr->hdr_mode = imx708->mode->rk_hdr_mode;
+-		break;
+-	case RKMODULE_SET_HDR_CFG:
+-		hdr = (struct rkmodule_hdr_cfg *)arg;
+-		w = imx708->mode->width;
+-		h = imx708->mode->height;
+-		for (i = 0; i < imx708->cfg_num; i++) {
+-			if (w == supported_modes_10bit_hdr[i].width &&
+-			    h == supported_modes_10bit_hdr[i].height &&
+-			    supported_modes_10bit_hdr[i].rk_hdr_mode == hdr->hdr_mode) {
+-				imx708->mode = &supported_modes_10bit_hdr[i];
+-				break;
+-			}
+-		}
+-		if (i == imx708->cfg_num) {
+-			dev_err(&imx708->client->dev,
+-				"not find hdr mode:%d %dx%d config\n",
+-				hdr->hdr_mode, w, h);
+-			ret = -EINVAL;
+-		} else {
+-			imx708_set_framing_limits(imx708);
+-		}
+-		break;
++	// case RKMODULE_GET_HDR_CFG:
++	// 	hdr = (struct rkmodule_hdr_cfg *)arg;
++	// 	if (imx708->mode->rk_hdr_mode == NO_HDR)
++	// 		hdr->esp.mode = HDR_NORMAL_VC;
++	// 	else
++	// 		hdr->esp.mode = HDR_ID_CODE;
++	// 	hdr->hdr_mode = imx708->mode->rk_hdr_mode;
++	// 	break;
++	// case RKMODULE_SET_HDR_CFG:
++	// 	hdr = (struct rkmodule_hdr_cfg *)arg;
++	// 	w = imx708->mode->width;
++	// 	h = imx708->mode->height;
++	// 	for (i = 0; i < imx708->cfg_num; i++) {
++	// 		if (w == supported_modes_10bit_hdr[i].width &&
++	// 		    h == supported_modes_10bit_hdr[i].height &&
++	// 		    supported_modes_10bit_hdr[i].rk_hdr_mode == hdr->hdr_mode) {
++	// 			imx708->mode = &supported_modes_10bit_hdr[i];
++	// 			break;
++	// 		}
++	// 	}
++	// 	if (i == imx708->cfg_num) {
++	// 		dev_err(&imx708->client->dev,
++	// 			"not find hdr mode:%d %dx%d config\n",
++	// 			hdr->hdr_mode, w, h);
++	// 		ret = -EINVAL;
++	// 	} else {
++	// 		imx708_set_framing_limits(imx708);
++	// 	}
++	// 	break;
+ 	case RKMODULE_SET_QUICK_STREAM:
+ 		stream = *((u32 *)arg);
+ 
+@@ -1947,7 +1947,7 @@ static long imx708_compat_ioctl32(struct v4l2_subdev *sd, unsigned int cmd,
+ 	void __user *up = compat_ptr(arg);
+ 	struct rkmodule_inf *inf;
+ 	struct rkmodule_awb_cfg *cfg;
+-	struct rkmodule_hdr_cfg *hdr;
++	/* struct rkmodule_hdr_cfg *hdr; */
+ 	struct rkmodule_channel_info *ch_info;
+ 	long ret;
+ 	u32 stream = 0;
+@@ -1984,36 +1984,36 @@ static long imx708_compat_ioctl32(struct v4l2_subdev *sd, unsigned int cmd,
+ 		ret = imx708_ioctl(sd, cmd, cfg);
+ 		kfree(cfg);
+ 		break;
+-	case RKMODULE_GET_HDR_CFG:
+-		hdr = kzalloc(sizeof(*hdr), GFP_KERNEL);
+-		if (!hdr) {
+-			ret = -ENOMEM;
+-			return ret;
+-		}
+-
+-		ret = imx708_ioctl(sd, cmd, hdr);
+-		if (!ret) {
+-			if (copy_to_user(up, hdr, sizeof(*hdr))) {
+-				kfree(hdr);
+-				return -EFAULT;
+-			}
+-		}
+-		kfree(hdr);
+-		break;
+-	case RKMODULE_SET_HDR_CFG:
+-		hdr = kzalloc(sizeof(*hdr), GFP_KERNEL);
+-		if (!hdr) {
+-			ret = -ENOMEM;
+-			return ret;
+-		}
+-
+-		if (copy_from_user(hdr, up, sizeof(*hdr))) {
+-			kfree(hdr);
+-			return -EFAULT;
+-		}
+-		ret = imx708_ioctl(sd, cmd, hdr);
+-		kfree(hdr);
+-		break;
++	// case RKMODULE_GET_HDR_CFG:
++	// 	hdr = kzalloc(sizeof(*hdr), GFP_KERNEL);
++	// 	if (!hdr) {
++	// 		ret = -ENOMEM;
++	// 		return ret;
++	// 	}
++
++	// 	ret = imx708_ioctl(sd, cmd, hdr);
++	// 	if (!ret) {
++	// 		if (copy_to_user(up, hdr, sizeof(*hdr))) {
++	// 			kfree(hdr);
++	// 			return -EFAULT;
++	// 		}
++	// 	}
++	// 	kfree(hdr);
++	// 	break;
++	// case RKMODULE_SET_HDR_CFG:
++	// 	hdr = kzalloc(sizeof(*hdr), GFP_KERNEL);
++	// 	if (!hdr) {
++	// 		ret = -ENOMEM;
++	// 		return ret;
++	// 	}
++
++	// 	if (copy_from_user(hdr, up, sizeof(*hdr))) {
++	// 		kfree(hdr);
++	// 		return -EFAULT;
++	// 	}
++	// 	ret = imx708_ioctl(sd, cmd, hdr);
++	// 	kfree(hdr);
++	// 	break;
+ 		// case RKMODULE_GET_CSI_DPHY_PARAM:
+ 		//	dphy_param = kzalloc(sizeof(*dphy_param), GFP_KERNEL);
+ 		//	if (!dphy_param) {
+@@ -2215,9 +2215,9 @@ static int imx708_init_controls(struct imx708 *imx708)
+ 
+ 	v4l2_ctrl_new_custom(ctrl_hdlr, &imx708_notify_gains_ctrl, NULL);
+ 
+-	imx708->hdr_mode = v4l2_ctrl_new_std(ctrl_hdlr, &imx708_ctrl_ops,
+-					     V4L2_CID_WIDE_DYNAMIC_RANGE,
+-					     0, 1, 1, 0);
++	/* imx708->hdr_mode = v4l2_ctrl_new_std(ctrl_hdlr, &imx708_ctrl_ops, */
++	/* 				     V4L2_CID_WIDE_DYNAMIC_RANGE, */
++	/* 				     0, 1, 1, 0); */
+ 
+ 	ret = v4l2_fwnode_device_parse(&client->dev, &props);
+ 	if (ret)
+@@ -2235,7 +2235,7 @@ static int imx708_init_controls(struct imx708 *imx708)
+ 	imx708->hblank->flags |= V4L2_CTRL_FLAG_READ_ONLY;
+ 	imx708->hflip->flags |= V4L2_CTRL_FLAG_MODIFY_LAYOUT;
+ 	imx708->vflip->flags |= V4L2_CTRL_FLAG_MODIFY_LAYOUT;
+-	imx708->hdr_mode->flags |= V4L2_CTRL_FLAG_MODIFY_LAYOUT;
++	/* imx708->hdr_mode->flags |= V4L2_CTRL_FLAG_MODIFY_LAYOUT; */
+ 
+ 	imx708->sd.ctrl_handler = ctrl_hdlr;
+ 
+@@ -2320,7 +2320,7 @@ static int imx708_probe(struct i2c_client *client,
+ 	struct imx708 *imx708;
+ 	char facing[2];
+ 	int ret;
+-	u32 i, hdr_mode = 0;
++	/* u32 i, hdr_mode = 0; */
+ 
+ 	dev_info(dev, "driver version: %02x.%02x.%02x", DRIVER_VERSION >> 16,
+ 		 (DRIVER_VERSION & 0xff00) >> 8, DRIVER_VERSION & 0x00ff);
+@@ -2340,11 +2340,11 @@ static int imx708_probe(struct i2c_client *client,
+ 	if (ret)
+ 		return -EINVAL;
+ 
+-	ret = of_property_read_u32(node, OF_CAMERA_HDR_MODE, &hdr_mode);
+-	if (ret) {
+-		hdr_mode = NO_HDR;
+-		dev_warn(dev, " Get hdr mode failed! no hdr default\n");
+-	}
++	/* ret = of_property_read_u32(node, OF_CAMERA_HDR_MODE, &hdr_mode); */
++	/* if (ret) { */
++	/* 	hdr_mode = NO_HDR; */
++	/* 	dev_warn(dev, " Get hdr mode failed! no hdr default\n"); */
++	/* } */
+ 
+ 	imx708->client = client;
+ 	v4l2_i2c_subdev_init(&imx708->sd, client, &imx708_subdev_ops);
+@@ -2352,19 +2352,19 @@ static int imx708_probe(struct i2c_client *client,
+ 	/* Initialize default format */
+ 	imx708_set_default_format(imx708);
+ 
+-	if (hdr_mode != NO_HDR) {
+-		imx708->cfg_num = ARRAY_SIZE(supported_modes_10bit_hdr);
+-
+-		for (i = 0; i < imx708->cfg_num; i++) {
+-			if (hdr_mode == supported_modes_10bit_hdr[i].rk_hdr_mode) {
+-				imx708->mode = &supported_modes_10bit_hdr[i];
+-				break;
+-			}
+-		}
+-
+-		if (i >= imx708->cfg_num)
+-			dev_warn(dev, " Get hdr mode failed! no hdr config\n");
+-	} else
++	/* if (hdr_mode != NO_HDR) { */
++	/* 	imx708->cfg_num = ARRAY_SIZE(supported_modes_10bit_hdr); */
++	/**/
++	/* 	for (i = 0; i < imx708->cfg_num; i++) { */
++	/* 		if (hdr_mode == supported_modes_10bit_hdr[i].rk_hdr_mode) { */
++	/* 			imx708->mode = &supported_modes_10bit_hdr[i]; */
++	/* 			break; */
++	/* 		} */
++	/* 	} */
++	/**/
++	/* 	if (i >= imx708->cfg_num) */
++	/* 		dev_warn(dev, " Get hdr mode failed! no hdr config\n"); */
++	/* } else */
+ 		imx708->cfg_num = ARRAY_SIZE(supported_modes_10bit_no_hdr);
+ 
+ 	/* Check the hardware configuration in device tree */
+-- 
+2.45.2
+
